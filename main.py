@@ -2,8 +2,9 @@ import pdfplumber
 from assets.classes import MP
 import re
 
+
 def load_pdf(file):
-    #TODO regex catches "Asylum and Migration Policy Project Refugee", "care of Embassy of Ukraine Ukraine", "owned by Manor Mews Medway", \
+    # TODO regex catches "Asylum and Migration Policy Project Refugee", "care of Embassy of Ukraine Ukraine", "owned by Manor Mews Medway", \
     # "Christine Jardine Communications Trader", "Director of Eviivo Ltd notice", "from Analogue Electrics Ltd month", "Asylum and Migration Policy Refugee" \
     # "as a secretary Coffey", "via JJC Holdings Ltd AF". Possibly limit it to 3 words?
     mp_pattern = re.compile(r"([a-zA-Z]+?, [a-z A-Z]*?)(?=( \([a-z A-Z]*\)))", re.M)
@@ -38,7 +39,7 @@ def load_pdf(file):
 
 
 def main():
-    #url = input("URL: ")
+    # url = input("URL: ")
     text = load_pdf("220503")
     print(text)
 
