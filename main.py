@@ -1,13 +1,12 @@
 import pdfplumber
 from assets.classes import MP
-import re
+import regex  # had to use regex for unicode category support
 
 
 def load_pdf(file):
-    # TODO regex catches "Asylum and Migration Policy Project Refugee", "care of Embassy of Ukraine Ukraine", "owned by Manor Mews Medway", \
-    # "Christine Jardine Communications Trader", "Director of Eviivo Ltd notice", "from Analogue Electrics Ltd month", "Asylum and Migration Policy Refugee" \
-    # "as a secretary Coffey", "via JJC Holdings Ltd AF". Possibly limit it to 3 words?
-    mp_pattern = re.compile(r"([a-zA-Z]+?, [a-z A-Z]*?)(?=( \([a-z A-Z]*\)))", re.M)
+    # most horrific regex i've ever seen, all just to allow for one (AND ONLY ONE) space between names. I'm sure I'll come back to this, 
+    # but it runs surprisingly quickly
+    mp_pattern = regex.compile(r'''(([\p{L}\-']{3,24}|[\p{L}\-']{3,24} [\p{L}\-']{3,24}), ([\p{L}\-]{3,15}|[\p{L}\-]{3,15} [\p{L}\-]{3,15}))(?=( \([\p{L} ,\-\(\)]+\)))''', regex.M)
     with pdfplumber.open(f"{file}.pdf") as pdf:
         queue_text = ""
         for i in pdf.pages:
