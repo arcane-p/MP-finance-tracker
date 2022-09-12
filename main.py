@@ -2,36 +2,37 @@ import pdfplumber
 from assets.classes import MP
 import regex  # regex over re for unicode support
 import logging
+# import tempfile
+import progressbar
+progressbar.streams.wrap_stderr()
+logging.basicConfig()
+
+# import pandas as pd
+# data = pd.read_csv("https://www.theyworkforyou.com/mps/?f=csv")
+# #clean data
+# data = data.drop("Person ID", axis=1).drop("Party", axis=1).drop("URI", axis=1)
+# data["Full name"] = data["Last name"] + ", " + data["First name"]
+# constituencies = data["Constituency"].tolist()
+
 
 def load_pdf(file):
-    # most horrific regex i've ever seen, all just to allow for one (AND ONLY ONE) space between names. I'm sure I'll come back to this,
-    # but it runs surprisingly quickly
-    # TODO: REGEX IS SKIPPING LIKE 100 MPS :((
-    mp_pattern = regex.compile(r'''(^([\p{L}\-']{3,24}|[\p{L}\-']{3,24} [\p{L}\-']{3,24}), ([\p{L}\-]{3,15}|[\p{L}\-]{2,15} [\p{L}\-]{3,15}))(?=( \([\p{L} ,\-\(\)]+\)))''', regex.M)
+    # Convoluted regex, which despite appearences runs quickly and accurately
+    mp_pattern = regex.compile(r'''(([\p{L}\-']{3,24}|[\p{L}\-']{2,24} [\p{L}\-']{2,24}), ([\p{L}\-]{2,15}|[\p{L}\-]{2,15} [\p{L}\ -]{1,25}))(?=( \(\p{Lu}[\p{L} ,\-]+\)))''', regex.M)
     with pdfplumber.open(f"{file}.pdf") as pdf:
         queue_text = ""
-        I = 0 ## TEMPORARY
         total_mps = 0  # temp
-        for i in pdf.pages:
+        for i in progressbar.progressbar(pdf.pages):
             # Extract text & detect
             page_text = i.extract_text()
             detections = list(mp_pattern.finditer(page_text))
 
-            # Validification
-            # sometimes, despite my best efforts, 'fake' MPs get detected. As much as i've hyper-refined the regex, potential detections\
-            # in the future are always possible. Thus, this quickly checks if there are any suspicious MPs and removes the detection. This
-            # also has to come before all the logic instead of being validated when initializing MPs as to not mess with logic (which relies
-            # on the number of detections to determine if on a full page, etc)
-            for match in detections:
-                name = match.group().split(",")
-                if name[0].strip()[0].islower() or name[1].strip()[0].islower() or "Inc" in name[1].strip() or "Inc." in name[1].strip():
-                    detections.remove(match)
-                    print(f"Removed {name}!")
-
             # QUEUE SECTION
+            # This skips the page if there is a full page with no detections
             if len(detections) == 0:  # On a full page
                 queue_text += page_text  # Add top to bottom of page to queue
                 continue  # go to next page w/ added queue
+
+            # if there are detections on the page:
             elif i != pdf.pages[0]:
                 queue_text += page_text[0:detections[0].start()]  # add page top to previous_mp's queue
                 mp = MP(firstname=name[1].strip(), lastname=name[0].strip())  # noqa: F821, name will always be set by previous iteration when page != 1
@@ -51,18 +52,37 @@ def load_pdf(file):
             name = detections[len(detections)-1].group().split(",")
             queue_text = page_text[detections[len(detections)-1].end():len(page_text)]
 
-            ## TEMPORARY
-            I += 1
-        # print("Total MPs:", total_mps)
-            #if I > 3:
-            quit()
+            # TEMPORARY
+            if total_mps > 0:
+                quit()
 
 
-def main():
-    # url = input("URL: ")
-    text = load_pdf("220503")
-    print(text)
+# def checker(line):
+#     results = [ele in line for ele in constituencies]
+#     return any(results)
+#     print(line, ",", constituencies[results.index(True)])
+
+
+# def main():
+#     # Convert PDF to Text
+#     with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as outfile:
+#         with pdfplumber.open(f'{input("PDF filename: ")}.pdf') as infile:
+#             for page in progressbar.progressbar(infile.pages):
+#                 outfile.write(page.extract_text())
+#         outfile.seek(0)
+
+#         with open("temp_text.txt", "w", encoding="utf-8") as f:
+#             f.write(outfile.read())
+
+#         # print("start")
+#         # for line in outfile:
+#         #     if checker(line) is True:
+#         #         print(line, end="")
+#         # print("end")
+#     exit()
+#     text = load_pdf("220503")
+#     print(text)
 
 
 if __name__ == "__main__":
-    main()
+    load_pdf("220503")
