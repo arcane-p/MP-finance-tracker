@@ -9,12 +9,13 @@ Thus, this program aims to scrape and then quantize these monthly reports. The d
 
 ### Roadmap
  - [x] Scrape information from PDF reliably
- - [ ] Detect MPs successfully
-	 - This has been done mostly but still has false negatives. I'll need to re-address - maybe using a master list of all MPs found elsewhere.
+ - [x] Detect MPs successfully
+	 - TODO: Add validation with master list of all MPs.
  - [ ] Clean and quantize data received
+     - [x] Chapter 4
  - [ ] Export
  - [ ] Display
- - [ ] Make it a recursive standalone script so that it can execute each month automatically
+ - [ ] Make it so that it can execute each month automatically
 
 ## Usage
 ### Installation
